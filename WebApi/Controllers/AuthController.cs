@@ -59,10 +59,10 @@ namespace WebApi.Controllers
                 var res = Repository.Validation(model);
                 if (res != null)
                 {
-                    var secretKey = new SymmetricSecurityKey
-                    (Encoding.UTF8.GetBytes("thisisasecretkey@123"));
-                    var signinCredentials = new SigningCredentials
-                   (secretKey, SecurityAlgorithms.HmacSha256);
+                   // var secretKey = new SymmetricSecurityKey
+                   // (Encoding.UTF8.GetBytes("thisisasecretkey@123"));
+                   // var signinCredentials = new SigningCredentials
+                   //(secretKey, SecurityAlgorithms.HmacSha256);
                     var claims = new List<Claim>() { new Claim("role", res.Role.ToString()) };
                     var now = DateTime.UtcNow;
                     var jwtSecurityToken = new JwtSecurityToken(
