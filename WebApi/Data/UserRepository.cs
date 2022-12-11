@@ -14,17 +14,17 @@ namespace WebApi.Data
             _appDbContext = appDbContext;
         }
 
-        public bool Validation(LoginDTO model) 
+        public User Validation(LoginDTO model) 
         {
             var res = _appDbContext.Users.Where(item => item.Email == model.Email).FirstOrDefault();
             if (res != null) 
             {
                 if (res.Password == Helpers.GetPasswordHash(model.Password)) 
                 {
-                    return true;
+                    return res;
                 }
             }
-            return false;
+            return null;
         }
 
         public async Task CreateAsync(User user)

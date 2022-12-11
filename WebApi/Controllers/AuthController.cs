@@ -17,8 +17,8 @@ namespace WebApi.Controllers
     //[Route("/api/[controller]")]
     public class AuthController : Controller
     {
-        private readonly IRepository<User> Repository;
-        public AuthController(IRepository<User> repository)
+        private readonly UserRepository Repository;
+        public AuthController(UserRepository repository)
         {
             Repository = repository;
         }
@@ -31,21 +31,21 @@ namespace WebApi.Controllers
         //        new User {Email = "DDD", Password = "dsddsd", Role = UserRole.User}
         //    };
 
-        [HttpGet]
-        public IActionResult GetUsers() 
-        {
-            return Ok();
-        }
+        //[HttpGet]
+        //public IActionResult GetUsers() 
+        //{
+        //    return Ok();
+        //}
 
         [AllowAnonymous]
         [HttpPost, Route("login")]
         public IActionResult Login(LoginDTO model)
         {
 
-            if (!ModelState.IsValid) 
-            {
-               return BadRequest("Username and/or Password not specified");
-            }
+            //if (!ModelState.IsValid) 
+            //{
+            //   return BadRequest("Username and/or Password not specified");
+            //}
 
 
 
@@ -54,21 +54,25 @@ namespace WebApi.Controllers
                 if (string.IsNullOrEmpty(model.Email) ||
                 string.IsNullOrEmpty(model.Password))
                     return BadRequest("Username and/or Password not specified");
-                if (model.Email.Equals("joydip") &&
-                model.Password.Equals("joydip123"))
+                //if (model.Email.Equals("joydip") &&
+                //model.Password.Equals("joydip123"))
+                var res = Repository.Validation(model);
+                if (res != null)
                 {
                     var secretKey = new SymmetricSecurityKey
                     (Encoding.UTF8.GetBytes("thisisasecretkey@123"));
                     var signinCredentials = new SigningCredentials
                    (secretKey, SecurityAlgorithms.HmacSha256);
+                    var claims = new List<Claim>() { new Claim("role", res.Role.ToString()) };
+                    var now = DateTime.UtcNow;
                     var jwtSecurityToken = new JwtSecurityToken(
-                        issuer: "ABCXYZ",
-                        audience: "http://localhost:51398",
-                        claims: new List<Claim>(),
-                        expires: DateTime.Now.AddMinutes(10),
-                        signingCredentials: signinCredentials
+                        issuer: AuthOptions.ISSUER,
+                        audience: AuthOptions.AUDIENCE,
+                        claims: claims,
+                        expires: now.Add(TimeSpan.FromMinutes(AuthOptions.LIFETIME)),
+                        signingCredentials: new SigningCredentials(AuthOptions.GetSymmetricSecurityKey(), SecurityAlgorithms.HmacSha256)
                     );
-                    Ok(new JwtSecurityTokenHandler().
+                    return Ok(new JwtSecurityTokenHandler().
                     WriteToken(jwtSecurityToken));
                 }
             }

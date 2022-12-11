@@ -1,4 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using WebApi.Data;
+using WebApi.Models;
 
 namespace WebApi.Controllers
 {
@@ -6,9 +9,22 @@ namespace WebApi.Controllers
     [Route("[controller]")]
     public class OrderController : Controller
     {
-        //public IActionResult Index()
-        //{
-        //    return View();
-        //}
+
+
+        private readonly OrderRepository Repository;
+
+        public OrderController(OrderRepository repository)
+        {
+            Repository = repository;
+        }
+
+        [HttpGet]
+        [Route("GetAll")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IEnumerable<Order>> GerOrders()
+        {
+            var res = Repository.GetAllAsync();
+            return res.Result;
+        }
     }
 }
