@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using WebApi.Common.Search;
 using WebApi.Models;
 
 namespace WebApi.Data
@@ -48,7 +49,7 @@ namespace WebApi.Data
         {
             try
             {
-                var obj = await _appDbContext.Orders.ToListAsync();
+                var obj = await _appDbContext.Orders.Include(item => item.Products).ToListAsync();
                 return obj;
             }
             catch (Exception)
@@ -63,7 +64,7 @@ namespace WebApi.Data
             {
                 if (Id != 0)
                 {
-                    var obj = await _appDbContext.Orders.FirstOrDefaultAsync(x => x.Id == Id);
+                    var obj = await _appDbContext.Orders.Include(item => item.Products).FirstOrDefaultAsync(x => x.Id == Id);
                     return obj;
                 }
                 else
@@ -98,5 +99,29 @@ namespace WebApi.Data
                 throw;
             }
         }
+
+        public async Task<IEnumerable<Order>> GetOrders(OrderSearchParams searchParams) 
+        {
+            IQueryable<Order> res = _appDbContext.Orders.Include(item => item.Products);
+            if(searchParams.SrartDate != null) 
+            {
+                res = res.Where(item => item.Date > searchParams.SrartDate);
+            }
+            if (searchParams.EndDate != null)
+            {
+                res = res.Where(item => item.Date < searchParams.EndDate);
+            }
+            if (searchParams.ProductId != null)
+            {
+                res = res.Where(item => item.Products.Any(item => item.Id == searchParams.ProductId));
+            }
+            if (searchParams.UserId != null)
+            {
+                res = res.Where(item => item.UserId == searchParams.UserId );
+            }
+            return res.ToList();
+        }
+
+
     }
 }

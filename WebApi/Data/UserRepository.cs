@@ -78,7 +78,7 @@ namespace WebApi.Data
             {
                 if (Id != 0)
                 {
-                    var obj = await _appDbContext.Users.FirstOrDefaultAsync(x => x.Id == Id);
+                    var obj = await _appDbContext.Users.Include(item => item.Orders).ThenInclude(item=>item.Products).FirstOrDefaultAsync(x => x.Id == Id);
                     return obj;
                 }
                 else

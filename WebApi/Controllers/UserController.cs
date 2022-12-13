@@ -14,38 +14,18 @@ namespace WebApi.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    //[Route("/api/[controller]")]
-    public class AuthController : Controller
+    public class UserController : Controller
     {
         private readonly UserRepository Repository;
-        public AuthController(UserRepository repository)
+        public UserController(UserRepository repository)
         {
             Repository = repository;
         }
-
-
-
-        //public List<User> users = new List<User>()
-        //    {
-        //        new User {Email = "Baljit", Password = "dsddsd", Role = UserRole.User},
-        //        new User {Email = "DDD", Password = "dsddsd", Role = UserRole.User}
-        //    };
-
-        //[HttpGet]
-        //public IActionResult GetUsers() 
-        //{
-        //    return Ok();
-        //}
 
         [AllowAnonymous]
         [HttpPost, Route("login")]
         public IActionResult Login(LoginDTO model)
         {
-
-            //if (!ModelState.IsValid) 
-            //{
-            //   return BadRequest("Username and/or Password not specified");
-            //}
 
 
 
@@ -54,23 +34,21 @@ namespace WebApi.Controllers
                 if (string.IsNullOrEmpty(model.Email) ||
                 string.IsNullOrEmpty(model.Password))
                     return BadRequest("Username and/or Password not specified");
-                //if (model.Email.Equals("joydip") &&
-                //model.Password.Equals("joydip123"))
                 var res = Repository.Validation(model);
                 if (res != null)
                 {
-                   // var secretKey = new SymmetricSecurityKey
-                   // (Encoding.UTF8.GetBytes("thisisasecretkey@123"));
-                   // var signinCredentials = new SigningCredentials
-                   //(secretKey, SecurityAlgorithms.HmacSha256);
-                    var claims = new List<Claim>() { new Claim("role", res.Role.ToString()) };
+                    var claims = new List<Claim>() 
+                    { 
+                        new Claim("role", res.Role.ToString()),
+                        new Claim("id" , res.Id.ToString())
+                    };
                     var now = DateTime.UtcNow;
                     var jwtSecurityToken = new JwtSecurityToken(
-                        issuer: AuthOptions.ISSUER,
-                        audience: AuthOptions.AUDIENCE,
+                        issuer: Models.AuthOptions.ISSUER,
+                        audience: Models.AuthOptions.AUDIENCE,
                         claims: claims,
-                        expires: now.Add(TimeSpan.FromMinutes(AuthOptions.LIFETIME)),
-                        signingCredentials: new SigningCredentials(AuthOptions.GetSymmetricSecurityKey(), SecurityAlgorithms.HmacSha256)
+                        expires: now.Add(TimeSpan.FromMinutes(Models.AuthOptions.LIFETIME)),
+                        signingCredentials: new SigningCredentials(Models.AuthOptions.GetSymmetricSecurityKey(), SecurityAlgorithms.HmacSha256)
                     );
                     return Ok(new JwtSecurityTokenHandler().
                     WriteToken(jwtSecurityToken));
@@ -101,6 +79,20 @@ namespace WebApi.Controllers
                 throw;
             }
             return Ok();
+        }
+
+        [HttpGet]
+        [Route("GetUserInfo")]
+        [Authorize(Roles = "Admin")]
+        public async Task<UserViewModel> GetUserInfo(int userId) 
+        {
+            var res = await Repository.GetByIdAsync(userId);
+            return new UserViewModel 
+            {
+                User = new User {Email = res.Email, Id = res.Id,Role = res.Role, Password = res.Password },
+                OrderCount = res.Orders.Count(),
+                OrderAmount = res.Orders.Sum(item => item.Products.Sum(item => item.Price)),
+            };
         }
     }
 }
